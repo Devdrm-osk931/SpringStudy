@@ -2,12 +2,15 @@ package hello.core.scope;
 
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Scope;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,7 +40,7 @@ public class SingletonWithPrototypeTest1 {
 
         ClientBean clientBean2 = ac.getBean(ClientBean.class);
         int count2 = clientBean2.logic();
-        assertThat(count2).isEqualTo(2);
+        assertThat(count2).isEqualTo(1);
 
     }
 
@@ -47,15 +50,23 @@ public class SingletonWithPrototypeTest1 {
         //생성시점에 이미 주입 --> 계속해서 로직을 호출해도 동일한 prototypeBean을 사용하게 된다
         // 로직을 호출할 때마다 새로운 prototypeBean을 요청하는것이 아니다
         // 이럴거면 prototypeBean을 싱글톤으로 쓰는것과 차이가 없다, 즉 용도와 다르게 쓰이고 있는 것이다 - 매번 새로운 객체를 생성하려면?
-        // 사용할 때마다 스프링 빈 컨테이너에 새로 요청을 해야한다..!
-        private final PrototypeBean prototypeBean;
+        // 사용할 때마다 스프링 빈 컨테이너에 새로 요청을 해야한다..! by ObjectProvider/ObjectFactory(Spring) or JSR-330 Provider(Java)
+//        private final PrototypeBean prototypeBean;
 
-        @Autowired //생성자가 하나이기 때문에 생략 가능
-        public ClientBean(PrototypeBean prototypeBean) {
-            this.prototypeBean = prototypeBean;
-        }
+        @Autowired
+//        private ObjectProvider<PrototypeBean> prototypeBeanProvider; //By ObjectProvider
+        private Provider<PrototypeBean> prototypeBeanProvider;
+
+//        @Autowired //생성자가 하나이기 때문에 생략 가능
+//        public ClientBean(PrototypeBean prototypeBean) {
+//            this.prototypeBean = prototypeBean;
+//        }
 
         public int logic() {
+//            prototypeBean.addCount();
+//            return prototypeBean.getCount();
+//            PrototypeBean prototypeBean = prototypeBeanProvider.getObject(); // By ObjectProvider
+            PrototypeBean prototypeBean = prototypeBeanProvider.get();
             prototypeBean.addCount();
             return prototypeBean.getCount();
         }
